@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>URL Manipulator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: inline-block;
+            width: 100px;
+        }
+
+        input, select {
+            padding: 5px;
+            width: 200px;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin-right: 10px;
+        }
+
+        .preview {
+            margin-top: 20px;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+<h2>URL Manipulator</h2>
+<form id="urlForm">
+    <div class="form-group">
+        <label for="protocol">Protocol:</label>
+        <select id="protocol" name="protocol">
+            <option value="http:">http:</option>
+            <option value="https:">https:</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="hostname">Hostname:</label>
+        <input type="text" id="hostname" name="hostname" placeholder="e.g., google.com">
+    </div>
+    <div class="form-group">
+        <label for="port">Port:</label>
+        <input type="number" id="port" name="port" placeholder="e.g., 3000 (optional)">
+    </div>
+    <div class="form-group">
+        <label for="pathname">Pathname:</label>
+        <input type="text" id="pathname" name="pathname" placeholder="e.g., /products/detail">
+    </div>
+    <div class="form-group">
+        <label for="search">Search/Query:</label>
+        <input type="text" id="search" name="search" placeholder="e.g., ?id=123&name=abc">
+    </div>
+    <div class="form-group">
+        <label for="hash">Hash:</label>
+        <input type="text" id="hash" name="hash" placeholder="e.g., #section1">
+    </div>
+    <div class="preview">Preview URL: <span id="preview">(Enter values to see the URL)</span></div>
+    <button type="button" id="navigate">Navigate</button>
+    <button type="button" id="replace">Replace</button>
+    <button type="button" id="reload">Reload</button>
+</form>
+
+<script>
+    // Define array of input field IDs
+    const keys = ["protocol", "hostname", "port", "pathname", "search", "hash"];
+
+    // Build URL from input fields
+    const constructURL = () => {
+        const parts = {};
+        keys.forEach(key => {
+            parts[key] = document.getElementById(key).value;
+        });
+
+        let url = `${parts.protocol}//${parts.hostname}`;
+        if (parts.port) url += `:${parts.port}`;
+        if (parts.pathname) url += parts.pathname;
+        if (parts.search) url += parts.search;
+        if (parts.hash) url += parts.hash;
+
+        return url;
+    };
+
+    // Update preview with entered values
+    const previewURL = () => {
+        let url = '';
+        keys.forEach(key => {
+            const value = document.getElementById(key).value;
+            if (value) {
+                if (key === "protocol") url += value;
+                else if (key === "hostname") url += `//${value}`;
+                else if (key === "port") url += `:${value}`;
+                else url += value;
+            }
+        });
+        document.getElementById('preview').textContent = url || '(Enter values to see the URL)';
+    };
+
+    // Navigate
+    document.getElementById('navigate').addEventListener('click', () => {
+        const url = constructURL();
+        if (url && document.getElementById('hostname').value) {
+            location.assign(url);
+        } else {
+            alert('Please enter at least a hostname.');
+        }
+    });
+
+    // Replace
+    document.getElementById('replace').addEventListener('click', () => {
+        const url = constructURL();
+        if (url && document.getElementById('hostname').value) {
+            location.replace(url);
+        } else {
+            alert('Please enter at least a hostname.');
+        }
+    });
+
+    // Reload
+    document.getElementById('reload').addEventListener('click', () => {
+        location.reload();
+    });
+
+    // Update preview
+    document.getElementById('urlForm').addEventListener('input', previewURL);
+</script>
+</body>
+</html>

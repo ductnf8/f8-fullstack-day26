@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPA Navigation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        nav {
+            margin-bottom: 20px;
+        }
+
+        nav a {
+            margin-right: 15px;
+            text-decoration: none;
+            color: #007bff;
+            cursor: pointer;
+            padding: 5px 10px;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        nav a.active {
+            background-color: #007bff;
+            color: white;
+            border-radius: 4px;
+        }
+
+        #content {
+            padding: 20px;
+            border: 1px solid #ddd;
+            min-height: 100px;
+        }
+
+        #history-info {
+            margin-top: 20px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+<nav>
+    <a href="/home" data-page="home" class="active">Home</a>
+    <a href="/about" data-page="about">About</a>
+    <a href="/services" data-page="services">Services</a>
+    <a href="/contact" data-page="contact">Contact</a>
+</nav>
+<div id="content">Chào mừng đến với trang chủ! Đây là nội dung của trang Home.</div>
+<div id="history-info">History Length: <span id="history-length">1</span></div>
+
+<script>
+    // Define page content
+    const pages = {
+        'home': 'Chào mừng đến với trang chủ! Đây là nội dung của trang Home.',
+        'about': 'Thông tin về chúng tôi. Chúng tôi là công ty chuyên về công nghệ web.',
+        'services': 'Các dịch vụ của chúng tôi: Thiết kế web, Lập trình ứng dụng, Tư vấn công nghệ.',
+        'contact': 'Liên hệ với chúng tôi: Email: contact@example.com, Phone: 0123456789'
+    };
+
+    function updateContent(page) {
+        // Default to 'home' if page is not found
+        page = pages[page] ? page : 'home';
+        document.getElementById('content').textContent = pages[page];
+        document.getElementById('history-length').textContent = history.length;
+        document.querySelectorAll('nav a').forEach(link => {
+            link.classList.toggle('active', link.getAttribute('data-page') === page);
+        });
+    }
+
+    document.querySelectorAll('nav a').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const page = link.getAttribute('data-page');
+            history.pushState({page}, '', `/${page}`);
+            updateContent(page);
+        });
+    });
+
+    // Handle back/forward navigation
+    window.addEventListener('popstate', (e) => {
+        const page = e.state ? e.state.page : 'home';
+        updateContent(page);
+    });
+
+    // Handle initial load or refresh
+    window.addEventListener('DOMContentLoaded', () => {
+        const page = location.pathname.slice(1) || 'home';
+        updateContent(page);
+    });
+</script>
+</body>
+</html>
