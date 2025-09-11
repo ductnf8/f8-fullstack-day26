@@ -23,6 +23,17 @@
     button {
         margin: 5px;
         padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background-color 0.3s;
+        background: #5CB960FF;
+        color: white;
+    }
+
+    button:hover {
+        background: #0B9A11FF;
     }
 </style>
 <body>
@@ -91,6 +102,7 @@
         const link = document.createElement('a')
         link.download = 'photo.png'
         link.href = photo.src
+        link.click()
     })
 
 
