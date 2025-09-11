@@ -36,7 +36,7 @@
 </style>
 <body>
 <h2>1.1. Location Properties Inspector</h2>
-<table >
+<table>
     <thead>
     <tr>
         <th>Property Name</th>
@@ -48,7 +48,30 @@
 
     </tbody>
 </table>
-<script src="location-inspector.js"></script>
+<script>
+    const props = [
+        'href',
+        'protocol',
+        'hostname',
+        'port',
+        'pathname',
+        'search',
+        'hash',
+        'origin',
+    ]
+
+    const renderLocation = () => {
+        const tbody = document.querySelector('#tbody')
+        tbody.innerHTML = props.map((name) => `
+    <tr>
+        <td>location.${name}</td>
+        <td>${window.location[name] || 'EMPTY'}</td>
+    </tr>
+    `).join('\n')
+    }
+    document.addEventListener("DOMContentLoaded", renderLocation);
+
+</script>
 
 </body>
 </html>
