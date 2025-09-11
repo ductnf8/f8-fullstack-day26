@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<style>
+    body {
+        font-family: sans-serif;
+        text-align: center;
+        margin: 20px;
+    }
+
+    video, canvas, img {
+        border: 1px solid #ccc;
+        margin: 10px 0;
+        max-width: 100%;
+    }
+
+    button {
+        margin: 5px;
+        padding: 10px 20px;
+    }
+</style>
+<body>
+<h2>3.2. Camera Capture App</h2>
+<video autoplay id="video"></video>
+<br>
+<button id="btnStart">Start Camera</button>
+<button id="btnStop">Stop Camera</button>
+<hr>
+
+<canvas id="canvas" style="display: none"></canvas>
+
+<img src="" id="photo" alt="Your photo">
+<br>
+<button id="btnTake">Take Photo</button>
+<button id="btnDownload">Download Photo</button>
+
+
+<script>
+    const btnStart = document.getElementById('btnStart');
+    const btnStop = document.getElementById('btnStop');
+    const canvas = document.getElementById('canvas');
+    const btnTake = document.getElementById('btnTake');
+    const btnDownload = document.getElementById('btnDownload');
+    const video = document.getElementById('video');
+    const photo = document.getElementById('photo');
+
+    let stream
+
+    // Start
+    btnStart.addEventListener('click', async () => {
+        stream = await navigator.mediaDevices.getUserMedia({
+            video: true
+        })
+        video.srcObject = stream;
+    })
+
+    // Stop
+    btnStop.addEventListener('click', () => {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            video.srcObject = null;
+        }
+    })
+
+    // Take Photo
+    btnTake.addEventListener('click', () => {
+        if (!stream) {
+            alert('Camera is not started!');
+            return;
+        }
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        photo.src = canvas.toDataURL('image/png');
+    })
+
+    // Download Photo
+    btnDownload.addEventListener('click', () => {
+        if (!photo.src) {
+            alert('No photo to download!');
+            return;
+        }
+
+        const link = document.createElement('a')
+        link.download = 'photo.png'
+        link.href = photo.src
+    })
+
+
+</script>
+</body>
+</html>
