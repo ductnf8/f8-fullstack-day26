@@ -2,77 +2,103 @@ function sendRequest(method, url, retryCount = 0) {
     return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open(method, url);
-        xhr.timeout = 5000; // Timeout 5 giây
+        xhr.timeout = 5000;
+
         xhr.onload = function () {
-            if (xhr.status >= 200 && xhr.status < 300) {
+            if (xhr.status >= 200 && xhr.status < 400) {
                 try {
                     const data = JSON.parse(xhr.responseText);
-                    console.log(`API ${url} thành công:`, data);
                     resolve(data);
-                } catch (error) {
-                    console.error(`Lỗi phân tích JSON từ ${url}:`, error);
-                    reject(new Error('Lỗi phân tích dữ liệu JSON'));
+                } catch (e) {
+                    console.error('Lỗi parse JSON:', e);
+                    reject(new Error('Lỗi parse dữ liệu từ server'));
                 }
             } else {
-                console.error(`Yêu cầu thất bại ${url}:`, xhr.status, xhr.statusText);
-                reject(new Error(`Yêu cầu thất bại với mã trạng thái ${xhr.status}`));
+                console.error('Lỗi server khi gọi:', url);
+                reject(new Error('Lỗi server khi tải dữ liệu'));
             }
         };
+
         xhr.onerror = function () {
-            console.error(`Lỗi mạng khi gọi ${url}`);
+            console.error('Chức năng: Lỗi mạng khi gọi:', url);
             reject(new Error('Lỗi mạng, kiểm tra kết nối hoặc chạy qua server'));
         };
+
         xhr.ontimeout = function () {
-            console.error(`Hết thời gian chờ khi gọi ${url}`);
+            console.error('Chức năng: Hết thời gian chờ khi gọi:', url);
             reject(new Error('Hết thời gian chờ, kiểm tra kết nối mạng'));
         };
+
         xhr.send();
     }).catch(error => {
         if (retryCount < 1) {
-            console.log(`Thử lại API ${url} sau 2 giây (lần ${retryCount + 1})`);
+            console.log(`Thử lại lần ${retryCount + 1} sau 2 giây cho ${url}`);
             return new Promise(resolve => setTimeout(resolve, 2000))
-                .then(() => sendRequest(method, url, retryCount + 1))
-                .catch(err => {
-                    console.error(`API ${url} thất bại sau ${retryCount + 1} lần thử:`, err);
-                    throw new Error(`${err.message} (số lần thử: ${retryCount + 1})`);
-                });
+                .then(() => sendRequest(method, url, retryCount + 1));
         }
-        throw error;
+        console.error('Lỗi sau khi thử lại:', error);
+        throw new Error(`${error.message} (sau ${retryCount + 1} lần thử)`);
     });
 }
 
-// Chức năng 1: User Profile Card
+function checkElement(dom) {
+    if (!dom) console.error(`Không tìm thấy ${dom} trong DOM`);
+}
+
+// DOM function 1
+const userIdInput = document.getElementById('user-id-input');
+const searchUserBtn = document.getElementById('search-user-btn');
+const userProfileCard = document.getElementById('user-profile-card');
+const userLoading = document.getElementById('user-loading');
+const userError = document.getElementById('user-error');
+const userErrorText = document.getElementById('user-error-text');
+
+// DOM function 2
+const postsContainer = document.getElementById('posts-container');
+const postsLoading = document.getElementById('posts-loading');
+const postsError = document.getElementById('posts-error');
+const postsErrorText = document.getElementById('posts-error-text');
+const loadMorePostsBtn = document.getElementById('load-more-posts-btn');
+
+// DOM function 3
+const todoUserIdInput = document.getElementById('todo-user-id-input');
+const loadTodosBtn = document.getElementById('load-todos-btn');
+const todoList = document.getElementById('todo-list');
+const todosLoading = document.getElementById('todos-loading');
+const todosError = document.getElementById('todos-error');
+const todosErrorText = document.getElementById('todos-error-text');
+const filterAll = document.getElementById('filter-all');
+const filterCompleted = document.getElementById('filter-completed');
+const filterIncomplete = document.getElementById('filter-incomplete');
+const totalTodos = document.getElementById('total-todos');
+const completedTodos = document.getElementById('completed-todos');
+const incompleteTodos = document.getElementById('incomplete-todos');
+
+// FUNCTION 1
 function setupUserProfile() {
-    const userIdInput = document.getElementById('user-id-input');
-    const findUserBtn = document.getElementById('search-user-btn');
-    const userProfileCard = document.getElementById('user-profile-card');
-    const userLoading = document.getElementById('user-loading');
-    const userError = document.getElementById('user-error');
-    const userErrorText = document.getElementById('user-error-text');
+    checkElement(userIdInput);
+    checkElement(searchUserBtn);
+    checkElement(userProfileCard);
+    checkElement(userLoading);
+    checkElement(userError);
+    checkElement(userErrorText);
 
-    if (!userIdInput) console.error('Chức năng 1: Không tìm thấy #user-id-input trong DOM');
-    if (!findUserBtn) console.error('Chức năng 1: Không tìm thấy #search-user-btn trong DOM');
-    if (!userProfileCard) console.error('Chức năng 1: Không tìm thấy #user-profile-card trong DOM');
-    if (!userLoading) console.error('Chức năng 1: Không tìm thấy #user-loading trong DOM');
-    if (!userError) console.error('Chức năng 1: Không tìm thấy #user-error trong DOM');
-    if (!userErrorText) console.error('Chức năng 1: Không tìm thấy #user-error-text trong DOM');
-
-    if (!userIdInput || !findUserBtn || !userProfileCard || !userLoading || !userError || !userErrorText) {
-        console.error('Chức năng 1: Thiếu phần tử DOM cần thiết, kiểm tra index.html có đúng các ID: user-id-input, search-user-btn, user-profile-card, user-loading, user-error, user-error-text');
+    if (!userIdInput || !searchUserBtn || !userProfileCard || !userLoading || !userError || !userErrorText) {
+        console.error('FUNCTION 1: MISSING NECESSARY DOM ELEMENT');
         return;
     }
 
     userError.classList.remove('show');
-    userError.style.display = 'none';
     userProfileCard.classList.remove('show');
+    userError.style.display = 'none';
     userProfileCard.style.display = 'none';
 
-    findUserBtn.addEventListener('click', () => {
+    searchUserBtn.addEventListener('click', () => {
         const userId = userIdInput.value.trim();
-        console.log(`Chức năng 1: Nhấn nút tìm user với ID: "${userId}"`);
+        console.log('userId: ', userId);
 
         if (!userId || isNaN(userId) || userId < 1 || userId > 10) {
-            console.log('Chức năng 1: User ID không hợp lệ:', userId);
+            console.log('userId is invalid');
             userError.style.display = 'block';
             userError.classList.add('show');
             userErrorText.textContent = 'Vui lòng nhập User ID từ 1 đến 10';
@@ -88,10 +114,16 @@ function setupUserProfile() {
         userProfileCard.style.display = 'none';
         userProfileCard.classList.remove('show');
 
-        console.log(`Chức năng 1: Tải thông tin user với ID: ${userId}`);
         sendRequest('GET', `https://jsonplaceholder.typicode.com/users/${userId}`)
             .then(user => {
-                console.log(`Chức năng 1: Tải user thành công:`, user);
+                userLoading.style.display = 'none';
+                userLoading.classList.remove('show');
+                console.log('Danh sach: ', user);
+
+                if (!user) {
+                    throw new Error('User không tồn tại');
+                }
+
                 userProfileCard.innerHTML = `
                     <div class="user-info">
                         <p><span class="label">Name:</span> ${user.name}</p>
@@ -104,63 +136,61 @@ function setupUserProfile() {
                 `;
                 userProfileCard.style.display = 'block';
                 userProfileCard.classList.add('show');
-                console.log('Chức năng 1: Đã hiển thị user profile card cho userId:', userId);
             })
             .catch(error => {
-                console.error(`Chức năng 1: Lỗi tải user ${userId}:`, error);
+                userLoading.style.display = 'none';
+                userLoading.classList.remove('show');
                 userError.style.display = 'block';
                 userError.classList.add('show');
                 userErrorText.textContent = error.message;
-            })
-            .finally(() => {
-                userLoading.style.display = 'none';
-                userLoading.classList.remove('show');
+                console.error('FUNCTION 1: Lỗi tải user:', error);
             });
     });
 }
 
-// Chức năng 2: Posts với Comments
+// FUNCTION 2
 function setupPosts() {
-    const postsContainer = document.getElementById('posts-container');
-    const postsLoading = document.getElementById('posts-loading');
-    const postsError = document.getElementById('posts-error');
-    const postsErrorText = document.getElementById('posts-error-text');
-    const loadMoreBtn = document.createElement('button');
-    let postLimit = 5;
-    let totalLoadedPosts = 0;
+    let currentPage = 1;
+    const postsPerPage = 5;
 
-    if (!postsContainer) console.error('Chức năng 2: Không tìm thấy #posts-container trong DOM');
-    if (!postsLoading) console.error('Chức năng 2: Không tìm thấy #posts-loading trong DOM');
-    if (!postsError) console.error('Chức năng 2: Không tìm thấy #posts-error trong DOM');
-    if (!postsErrorText) console.error('Chức năng 2: Không tìm thấy #posts-error-text trong DOM');
+    checkElement(postsContainer);
+    checkElement(postsLoading);
+    checkElement(postsError);
+    checkElement(postsErrorText);
+    checkElement(loadMorePostsBtn);
 
-    if (!postsContainer || !postsLoading || !postsError || !postsErrorText) {
-        console.error('Chức năng 2: Thiếu phần tử DOM cần thiết, kiểm tra index.html');
+    if (!postsContainer || !postsLoading || !postsError || !postsErrorText || !loadMorePostsBtn) {
+        console.error('FUNCTION 2: MISSING NECESSARY DOM ELEMENT');
         return;
     }
 
     postsLoading.style.display = 'block';
     postsError.style.display = 'none';
     postsContainer.innerHTML = '';
+    loadMorePostsBtn.style.display = 'none';
 
-    loadMoreBtn.textContent = 'Xem thêm';
-    loadMoreBtn.className = 'load-more-btn';
-    postsContainer.after(loadMoreBtn);
-
-    function loadPosts(start = 0, limit = postLimit) {
-        console.log(`Chức năng 2: Tải posts từ API, start=${start}, limit=${limit}`);
+    function loadPosts(page = 1) {
         postsLoading.style.display = 'block';
+        postsLoading.classList.add('show');
         postsError.style.display = 'none';
+        postsError.classList.remove('show');
+        if (page === 1) postsContainer.innerHTML = '';
 
-        sendRequest('GET', `https://jsonplaceholder.typicode.com/posts?_start=${start}&_limit=${limit}`)
+        sendRequest('GET', `https://jsonplaceholder.typicode.com/posts?_limit=${postsPerPage}&_page=${page}`)
             .then(posts => {
-                console.log(`Chức năng 2: Posts tải thành công:`, posts);
-                totalLoadedPosts += posts.length;
+                postsLoading.style.display = 'none';
+                postsLoading.classList.remove('show');
+                if (!posts || posts.length === 0) {
+                    throw new Error('Không còn bài viết để tải');
+                }
+
+                loadMorePostsBtn.style.display = posts.length < postsPerPage ? 'none' : 'block';
+
                 return Promise.all(posts.map(post =>
                     sendRequest('GET', `https://jsonplaceholder.typicode.com/users/${post.userId}`)
                         .then(user => ({post, user}))
                         .catch(error => {
-                            console.error(`Chức năng 2: Lỗi tải user ${post.userId}:`, error);
+                            console.error(`Lỗi tải user ${post.userId}:`, error);
                             return {post, user: null};
                         })
                 ));
@@ -173,31 +203,22 @@ function setupPosts() {
                     postElement.innerHTML = `
                         <h4 class="post-title">${post.title}</h4>
                         <p class="post-body">${post.body}</p>
-                        <p class="post-author">Tác giả: <span class="author-name">${user ? `${user.name} (${user.email})` : 'Lỗi tải tác giả'}</span></p>
-                        <button class="show-comments-btn" data-post-id="${post.id}" data-user-id="${post.userId}">Xem comments</button>
+                        <p class="post-author">Tác giả: <span class="author-name">${user ? `${user.name} (${user.email})` : 'Đang tải...'}</span></p>
+                        <button class="show-comments-btn" data-post-id="${post.id}">Xem comments</button>
                         <div class="comments-container" data-post-id="${post.id}"></div>
                     `;
                     postsContainer.appendChild(postElement);
                 });
-                console.log(`Chức năng 2: Đã render ${postsWithUsers.length} posts, tổng cộng: ${totalLoadedPosts}`);
-                loadMoreBtn.style.display = totalLoadedPosts >= 20 ? 'none' : 'block';
             })
             .catch(error => {
-                console.error('Chức năng 2: Lỗi tải posts:', error);
-                postsError.style.display = 'block';
-                postsErrorText.textContent = error.message;
-            })
-            .finally(() => {
                 postsLoading.style.display = 'none';
+                postsLoading.classList.remove('show');
+                postsError.style.display = 'block';
+                postsError.classList.add('show');
+                postsErrorText.textContent = error.message;
+                console.error('FUNCTION 2: Lỗi tải posts:', error);
             });
     }
-
-    loadPosts();
-
-    loadMoreBtn.addEventListener('click', () => {
-        console.log('Chức năng 2: Nhấn nút Xem thêm');
-        loadPosts(totalLoadedPosts, postLimit);
-    });
 
     postsContainer.addEventListener('click', (e) => {
         if (e.target.classList.contains('show-comments-btn')) {
@@ -206,106 +227,89 @@ function setupPosts() {
             const button = e.target;
 
             if (!commentsContainer) {
-                console.error(`Chức năng 2: Không tìm thấy .comments-container cho post ${postId}`);
+                console.error(`Không tìm thấy comments cho post ${postId}`);
                 return;
             }
 
             if (button.textContent === 'Xem comments') {
-                console.log(`Chức năng 2: Tải danh sách posts cho post ${postId}`);
+                console.log(`Tải comments cho post ${postId}`);
                 postsLoading.style.display = 'block';
-                sendRequest('GET', 'https://jsonplaceholder.typicode.com/posts?_limit=5')
-                    .then(posts => {
-                        console.log(`Chức năng 2: Danh sách posts tải thành công cho post ${postId}:`, posts);
-                        return Promise.all(posts.map(post =>
-                            sendRequest('GET', `https://jsonplaceholder.typicode.com/users/${post.userId}`)
-                                .then(user => ({post, user}))
-                                .catch(error => {
-                                    console.error(`Chức năng 2: Lỗi tải user ${post.userId} trong comments:`, error);
-                                    return {post, user: null};
-                                })
-                        ));
-                    })
-                    .then(postsWithUsers => {
+                postsLoading.classList.add('show');
+
+                sendRequest('GET', `https://jsonplaceholder.typicode.com/posts/${postId}/comments`)
+                    .then(comments => {
+                        postsLoading.style.display = 'none';
+                        postsLoading.classList.remove('show');
+                        console.log(`post ${postId} comments:`, comments);
+
                         commentsContainer.innerHTML = `
-                            <h4>Danh sách bài posts:</h4>
-                            ${postsWithUsers.map(({post, user}) => `
-                                <div class="post-item" data-post-id="${post.id}">
-                                    <h4 class="post-title">${post.title}</h4>
-                                    <p class="post-body">${post.body}</p>
-                                    <p class="post-author">Tác giả: <span class="author-name">${user ? `${user.name} (${user.email})` : 'Lỗi tải tác giả'}</span></p>
+                            <h4>Danh sách comments:</h4>
+                            ${comments.map(c => `
+                                <div class="comment-item">
+                                    <p><strong>${c.name}</strong> (${c.email})</p>
+                                    <p>${c.body}</p>
                                 </div>
                             `).join('')}
                         `;
-                        console.log(`Chức năng 2: Đã render ${postsWithUsers.length} posts vào .comments-container cho post ${postId}`);
                         commentsContainer.classList.add('show');
                         button.textContent = 'Ẩn comments';
                     })
                     .catch(error => {
-                        console.error(`Chức năng 2: Lỗi tải posts cho post ${postId}:`, error);
-                        commentsContainer.innerHTML = `<p class="error">Lỗi: ${error.message}</p>`;
-                    })
-                    .finally(() => {
                         postsLoading.style.display = 'none';
+                        postsLoading.classList.remove('show');
+                        commentsContainer.innerHTML = `<p class="error">Lỗi: ${error.message}</p>`;
+                        console.error(`FUNCTION 2: Lỗi tải comments cho post ${postId}:`, error);
                     });
             } else {
                 commentsContainer.innerHTML = '';
                 commentsContainer.classList.remove('show');
                 button.textContent = 'Xem comments';
-                console.log(`Chức năng 2: Đã xóa nội dung .comments-container cho post ${postId}`);
+                console.log(`Đã ẩn comments cho post ${postId}`);
             }
         }
     });
+
+    loadMorePostsBtn.addEventListener('click', () => {
+        currentPage++;
+        loadPosts(currentPage);
+    });
+
+    loadPosts();
 }
 
-// Chức năng 3: Todo List với Filter
+// FUNCTION 3
 function setupTodoList() {
-    const todoUserIdInput = document.getElementById('todo-user-id-input');
-    const loadTodosBtn = document.getElementById('load-todos-btn');
-    const todoList = document.getElementById('todo-list');
-    const todosLoading = document.getElementById('todos-loading');
-    const todosError = document.getElementById('todos-error');
-    const todosErrorText = document.getElementById('todos-error-text');
-    const filterAll = document.getElementById('filter-all');
-    const filterCompleted = document.getElementById('filter-completed');
-    const filterIncomplete = document.getElementById('filter-incomplete');
-    const totalTodos = document.getElementById('total-todos');
-    const completedTodos = document.getElementById('completed-todos');
-    const incompleteTodos = document.getElementById('incomplete-todos');
     let todos = [];
     let currentFilter = localStorage.getItem('todoFilter') || 'all';
 
-    if (!todoUserIdInput) console.error('Chức năng 3: Không tìm thấy #todo-user-id-input');
-    if (!loadTodosBtn) console.error('Chức năng 3: Không tìm thấy #load-todos-btn');
-    if (!todoList) console.error('Chức năng 3: Không tìm thấy #todo-list');
-    if (!todosLoading) console.error('Chức năng 3: Không tìm thấy #todos-loading');
-    if (!todosError) console.error('Chức năng 3: Không tìm thấy #todos-error');
-    if (!todosErrorText) console.error('Chức năng 3: Không tìm thấy #todos-error-text');
-    if (!filterAll) console.error('Chức năng 3: Không tìm thấy #filter-all');
-    if (!filterCompleted) console.error('Chức năng 3: Không tìm thấy #filter-completed');
-    if (!filterIncomplete) console.error('Chức năng 3: Không tìm thấy #filter-incomplete');
-    if (!totalTodos || !completedTodos || !incompleteTodos) console.error('Chức năng 3: Không tìm thấy các phần tử thống kê todos');
+    checkElement(todoUserIdInput);
+    checkElement(loadTodosBtn);
+    checkElement(todoList);
+    checkElement(todosLoading);
+    checkElement(todosError);
+    checkElement(todosErrorText);
+    checkElement(filterAll);
+    checkElement(filterCompleted);
+    checkElement(filterIncomplete);
+    checkElement(totalTodos);
+    checkElement(completedTodos);
+    checkElement(incompleteTodos);
 
-    if (!todoUserIdInput || !loadTodosBtn || !todoList || !todosLoading || !todosError || !todosErrorText || !filterAll || !filterCompleted || !filterIncomplete) {
-        console.error('Chức năng 3: Thiếu phần tử DOM cần thiết, kiểm tra index.html');
+    if (!todoUserIdInput || !loadTodosBtn || !todoList || !todosLoading || !todosError || !todosErrorText || !filterAll || !filterCompleted || !filterIncomplete || !totalTodos || !completedTodos || !incompleteTodos) {
+        console.error('FUNCTION 3: MISSING NECESSARY DOM ELEMENT');
         return;
     }
 
     todosError.style.display = 'none';
+    todosError.classList.remove('show');
     todoList.innerHTML = '';
 
-    console.log(`Chức năng 3: Khởi tạo filter từ localStorage: ${currentFilter}`);
     if (currentFilter === 'all') {
         filterAll.classList.add('active');
-        filterCompleted.classList.remove('active');
-        filterIncomplete.classList.remove('active');
     } else if (currentFilter === 'completed') {
-        filterAll.classList.remove('active');
         filterCompleted.classList.add('active');
-        filterIncomplete.classList.remove('active');
     } else if (currentFilter === 'incomplete') {
-        filterAll.classList.remove('active');
-        filterCompleted.classList.add('active');
-        filterIncomplete.classList.remove('active');
+        filterIncomplete.classList.add('active');
     }
 
     function updateStats(todosToShow) {
@@ -327,7 +331,7 @@ function setupTodoList() {
     }
 
     function applyCurrentFilter() {
-        console.log(`Chức năng 3: Áp dụng filter: ${currentFilter}`);
+        console.log(`FUNCTION 3: filter: ${currentFilter}`);
         if (currentFilter === 'all') {
             displayTodos(todos);
         } else if (currentFilter === 'completed') {
@@ -339,9 +343,12 @@ function setupTodoList() {
 
     loadTodosBtn.addEventListener('click', () => {
         const userId = todoUserIdInput.value.trim() || '1';
+        console.log(`FUNCTION 3: userId: ${userId}`);
+
         if (!userId || isNaN(userId) || userId < 1 || userId > 10) {
-            console.log('Chức năng 3: User ID không hợp lệ:', userId);
+            console.log('FUNCTION 3: Invalid user id');
             todosError.style.display = 'block';
+            todosError.classList.add('show');
             todosErrorText.textContent = 'Vui lòng nhập User ID từ 1 đến 10';
             todoList.innerHTML = '';
             updateStats([]);
@@ -349,32 +356,34 @@ function setupTodoList() {
         }
 
         todosLoading.style.display = 'block';
+        todosLoading.classList.add('show');
         todosError.style.display = 'none';
+        todosError.classList.remove('show');
         todoList.innerHTML = '';
 
-        console.log(`Chức năng 3: Tải todos cho userId: ${userId}`);
         sendRequest('GET', `https://jsonplaceholder.typicode.com/users/${userId}/todos`)
             .then(data => {
+                todosLoading.style.display = 'none';
+                todosLoading.classList.remove('show');
+                console.log(`FUNCTION 3: Todos tải thành công cho userId ${userId}:`, data);
                 todos = data;
-                console.log(`Chức năng 3: Todos tải thành công cho userId ${userId}:`, todos);
                 applyCurrentFilter();
             })
             .catch(error => {
-                console.error(`Chức năng 3: Lỗi tải todos cho userId ${userId}:`, error);
+                todosLoading.style.display = 'none';
+                todosLoading.classList.remove('show');
                 todosError.style.display = 'block';
+                todosError.classList.add('show');
                 todosErrorText.textContent = error.message;
+                console.error(`FUNCTION 3: Lỗi tải todos cho userId ${userId}:`, error);
                 todoList.innerHTML = '';
                 updateStats([]);
-            })
-            .finally(() => {
-                todosLoading.style.display = 'none';
             });
     });
 
     filterAll.addEventListener('click', () => {
         currentFilter = 'all';
         localStorage.setItem('todoFilter', currentFilter);
-        console.log('Chức năng 3: Lưu filter vào localStorage: all');
         filterAll.classList.add('active');
         filterCompleted.classList.remove('active');
         filterIncomplete.classList.remove('active');
@@ -384,7 +393,6 @@ function setupTodoList() {
     filterCompleted.addEventListener('click', () => {
         currentFilter = 'completed';
         localStorage.setItem('todoFilter', currentFilter);
-        console.log('Chức năng 3: Lưu filter vào localStorage: completed');
         filterAll.classList.remove('active');
         filterCompleted.classList.add('active');
         filterIncomplete.classList.remove('active');
@@ -394,7 +402,6 @@ function setupTodoList() {
     filterIncomplete.addEventListener('click', () => {
         currentFilter = 'incomplete';
         localStorage.setItem('todoFilter', currentFilter);
-        console.log('Chức năng 3: Lưu filter vào localStorage: incomplete');
         filterAll.classList.remove('active');
         filterCompleted.classList.remove('active');
         filterIncomplete.classList.add('active');
@@ -402,31 +409,7 @@ function setupTodoList() {
     });
 }
 
-// CSS bổ sung để hỗ trợ giao diện
-const style = document.createElement('style');
-style.textContent = `
-    .error-message { color: red; display: none; }
-    .loading-spinner { display: none; }
-    .user-profile-card { display: none; }
-    .user-info { padding: 10px; }
-    .label { color: #667eea; font-weight: bold; }
-    .post-item { margin-bottom: 20px; border: 1px solid #ddd; padding: 10px; }
-    .comments-container { margin-top: 10px; min-height: 50px; }
-    .comments-container .post-item { margin-left: 20px; border-left: 2px solid #667eea; padding-left: 10px; margin-bottom: 10px; }
-    .todo-item.completed { background-color: #e0ffe0; padding: 10px; }
-    .todo-item.incomplete { background-color: #ffe0e0; padding: 10px; }
-    .filter-btn.active { background-color: #667eea; color: white; }
-    .filter-btn { margin: 5px; }
-    .show-comments-btn { cursor: pointer; background-color: #4caf50; color: white; border: none; padding: 5px 10px; }
-    .show-comments-btn:hover { background-color: #45a049; }
-    .load-more-btn { cursor: pointer; background-color: #667eea; color: white; border: none; padding: 10px 20px; margin-top: 10px; }
-    .load-more-btn:hover { background-color: #5a67d8; }
-`;
-document.head.appendChild(style);
-
-// Khởi chạy các chức năng
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('Trang đã tải, khởi chạy các chức năng...');
     setupUserProfile();
     setupPosts();
     setupTodoList();
